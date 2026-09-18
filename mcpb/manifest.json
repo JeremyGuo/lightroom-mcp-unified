@@ -1,0 +1,187 @@
+{
+  "manifest_version": "0.3",
+  "name": "lightroom-mcp-unified",
+  "display_name": "Lightroom MCP Unified",
+  "version": "0.1.0",
+  "description": "Catalog, develop, previews, masks and Enhance via a Lightroom Classic Lua plugin.",
+  "long_description": "31 MCP tools in one bridge. Includes runtime capability checks and explicit limitations for interactive masks and AI processing. Install the bundled Lua plugin, restart Lightroom, then use the tools. See the README and feature audit for actual verification scope.",
+  "author": {
+    "name": "JeremyGuo and contributors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JeremyGuo/lightroom-mcp-unified"
+  },
+  "license": "MIT",
+  "keywords": [
+    "lightroom",
+    "lightroom-classic",
+    "photography",
+    "adobe"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/dist/index.js"
+      ],
+      "env": {
+        "LIGHTROOM_MCP_REQUEST_PORT": "${user_config.request_port}",
+        "LIGHTROOM_MCP_RESPONSE_PORT": "${user_config.response_port}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "search_photos",
+      "description": "Search for photos in Lightroom catalog by criteria (paginated, default limit 100). Providing at least one filter (filename, keywords, rating, or date) significantly improves performance on large catalogs."
+    },
+    {
+      "name": "get_selected_photos",
+      "description": "Get currently selected photos in Lightroom (or filmstrip if no selection). Paginated, default limit 100."
+    },
+    {
+      "name": "get_photo_metadata",
+      "description": "Get detailed metadata for a specific photo: EXIF, title/caption/headline, GPS (latitude/longitude/altitude), IPTC location (sublocation/city/stateProvince/country/isoCountryCode), copyright, and develop settings"
+    },
+    {
+      "name": "list_collections",
+      "description": "List all collections in Lightroom catalog (paginated, default limit 100)"
+    },
+    {
+      "name": "create_collection",
+      "description": "Create a new collection"
+    },
+    {
+      "name": "add_to_collection",
+      "description": "Add photos to a collection"
+    },
+    {
+      "name": "set_keywords",
+      "description": "Add or remove keywords from photos"
+    },
+    {
+      "name": "set_rating",
+      "description": "Set star rating for photos"
+    },
+    {
+      "name": "import_photos",
+      "description": "Import photos into Lightroom catalog"
+    },
+    {
+      "name": "export_photos",
+      "description": "Export photos from Lightroom"
+    },
+    {
+      "name": "list_develop_presets",
+      "description": "List Lightroom-visible Develop presets and plugin-managed preset checkpoints"
+    },
+    {
+      "name": "get_develop_preset",
+      "description": "Read the settings and backing-file metadata for one exact Develop preset. Use preset_uuid or provide folder/scope when names are duplicated."
+    },
+    {
+      "name": "compare_develop_presets",
+      "description": "Compare two Develop presets and return a deterministic per-setting diff for iterative style matching"
+    },
+    {
+      "name": "create_develop_preset",
+      "description": "Create a versioned plugin-managed Develop preset checkpoint from selected settings on one photo. The checkpoint is hidden from the Develop panel; export it for handoff."
+    },
+    {
+      "name": "export_develop_preset",
+      "description": "Copy one exact custom or plugin-managed Develop preset backing file to a destination directory. Existing files are never overwritten; built-in presets without backing files cannot be exported."
+    },
+    {
+      "name": "apply_develop_preset",
+      "description": "Apply one exact Develop preset to one or more photos"
+    },
+    {
+      "name": "copy_develop_settings",
+      "description": "Copy Develop settings from one photo to others"
+    },
+    {
+      "name": "set_develop_settings",
+      "description": "Set Develop settings directly on a photo. Keys use allowlisted Lightroom SDK names (Exposure2012, WhiteBalance, Contrast2012, Highlights2012, Shadows2012, Whites2012, Blacks2012, Clarity2012, Vibrance, Saturation, HueAdjustmentRed, SaturationAdjustmentOrange, LuminanceAdjustmentYellow, etc.), plus RGB composite and per-channel point curves via ToneCurvePV2012, ToneCurvePV2012Red, ToneCurvePV2012Green, and ToneCurvePV2012Blue."
+    },
+    {
+      "name": "lr_ping",
+      "description": "Check the authenticated Lightroom connection and runtime version."
+    },
+    {
+      "name": "lr_capabilities",
+      "description": "Inspect actual Lightroom runtime APIs, supported sliders and limits, and feature caveats before using version-dependent tools."
+    },
+    {
+      "name": "lr_get_settings",
+      "description": "Read the active photo's current develop settings, controller slider ranges, ID, filename and rating."
+    },
+    {
+      "name": "lr_apply_settings",
+      "description": "Set absolute global develop slider values on the active photo. Preflight all names and ranges, then report values read back from Lightroom. This is not AI Denoise."
+    },
+    {
+      "name": "lr_batch_apply_settings",
+      "description": "Apply absolute global settings to the explicitly selected photos using catalog SDK keys. An empty selection is an error. Reports per-photo failures; ordinary noise sliders are not AI Denoise."
+    },
+    {
+      "name": "lr_auto_tone",
+      "description": "Run Lightroom Auto Tone on the active photo."
+    },
+    {
+      "name": "lr_reset",
+      "description": "Reset ALL develop adjustments on the active photo. Existing edits will be replaced by defaults."
+    },
+    {
+      "name": "lr_export_preview",
+      "description": "Render the active photo's current edits as an sRGB JPEG and return MCP image content. Rendering is done by Lightroom, including Nikon NEF decoding. Removes temporary render files."
+    },
+    {
+      "name": "lr_crop",
+      "description": "Crop the active photo in normalized 0..1 coordinates and/or straighten it. Checks the final combined rectangle before writing."
+    },
+    {
+      "name": "lr_add_mask",
+      "description": "Start a mask using Lightroom's SDK. Some types require drawing, sampling or choosing a person/object in Lightroom. Geometry parameters are not supported. Adjustments are applied only to a verified newly selected mask; a pending operation is never reported as completed."
+    },
+    {
+      "name": "lr_update_mask",
+      "description": "Set local sliders on the mask currently selected in Lightroom. Fails when the SDK cannot verify a selected mask. Does not create a mask."
+    },
+    {
+      "name": "lr_lens_blur",
+      "description": "Control Lens Blur when exposed by this Lightroom runtime. GPU/image support is determined by Lightroom. Errors are reported and accepted requests do not certify completion of background AI processing."
+    },
+    {
+      "name": "lr_enhance",
+      "description": "Request AI Enhance using Lightroom's runtime API when available. This differs from ordinary noise-reduction sliders. Returns submission status, not a claim that a DNG was created or background processing finished."
+    }
+  ],
+  "user_config": {
+    "request_port": {
+      "type": "string",
+      "title": "Plugin request port",
+      "description": "TCP port the Lightroom plugin listens on for requests. Must match the Plug-in Manager setting.",
+      "default": "58773",
+      "required": false
+    },
+    "response_port": {
+      "type": "string",
+      "title": "Plugin response port",
+      "description": "TCP port the Lightroom plugin sends responses on. Must match the Plug-in Manager setting.",
+      "default": "58774",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
+    "runtimes": {
+      "node": ">=22.0.0"
+    }
+  }
+}
