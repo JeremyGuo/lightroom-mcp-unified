@@ -14,10 +14,20 @@ describe('built CLI over actual stdio and TCP sockets', () => {
     await fs.writeFile(tokenPath, token, { mode: 0o600 });
     let responseSocket: net.Socket | undefined;
     const connections: net.Socket[] = [];
-    const seen: string[] = [];
-    const output = net.createServer(socket => { responseSocket = socket; connections.push(socket); });
-    const input = net.createServer(socket => {
+    const socketErrors: Error[] = [];
+    let closing = false;
+    const track = (socket: net.Socket) => {
       connections.push(socket);
+      socket.on('error', (error: NodeJS.ErrnoException) => {
+        // Terminating the child closes its TCP connections with RST on Windows.
+        // Only accept that specific error during intentional fixture teardown.
+        if (!closing || error.code !== 'ECONNRESET') socketErrors.push(error);
+      });
+    };
+    const seen: string[] = [];
+    const output = net.createServer(socket => { responseSocket = socket; track(socket); });
+    const input = net.createServer(socket => {
+      track(socket);
       let buffer = '';
       socket.setEncoding('utf8');
       socket.on('data', (part: string) => {
@@ -58,10 +68,12 @@ describe('built CLI over actual stdio and TCP sockets', () => {
       expect(seen).toContain('ping');
       expect(seen).toContain('lr_export_preview');
     } finally {
+      closing = true;
       await client.close();
       for (const socket of connections) socket.destroy();
       await Promise.all([input, output].map(server => new Promise<void>(resolve => server.close(() => resolve()))));
       await fs.rm(directory, { recursive: true, force: true });
     }
+    expect(socketErrors).toEqual([]);
   }, 15000);
 });
