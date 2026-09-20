@@ -56,12 +56,14 @@ function ImportHandler.importPhotos(args)
     -- Resolve the collection before importing anything; reject ambiguous names.
     local targetCollection = args.collection_name and CollectionLookup.find(catalog, args.collection_name, false) or nil
     if args.collection_name and not targetCollection then error('Collection not found: ' .. args.collection_name) end
+    -- copy_to is the public MCP contract; destination remains a legacy TCP alias.
+    local copyTo = args.copy_to or args.destination
     local planned = {}
     local destinations = {}
     for _, filePath in ipairs(photosToImport) do
         local destination = filePath
-        if args.destination then
-            destination = LrPathUtils.child(args.destination, LrPathUtils.leafName(filePath))
+        if copyTo then
+            destination = LrPathUtils.child(copyTo, LrPathUtils.leafName(filePath))
             local folded = destination:lower()
             if destinations[folded] or LrFileUtils.exists(destination) then
                 error('Import destination collision; no files copied: ' .. destination)
@@ -70,8 +72,8 @@ function ImportHandler.importPhotos(args)
         end
         planned[#planned+1] = { source=filePath, destination=destination }
     end
-    if args.destination then
-        local created, err=LrFileUtils.createAllDirectories(args.destination)
+    if copyTo then
+        local created, err=LrFileUtils.createAllDirectories(copyTo)
         if not created then error('Cannot create import destination: ' .. tostring(err)) end
     end
 
@@ -79,7 +81,7 @@ function ImportHandler.importPhotos(args)
     for _, item in ipairs(planned) do
         local copied = false
         local ok, err=LrTasks.pcall(function()
-            if args.destination then
+            if copyTo then
                 local copyOK, copyErr=LrFileUtils.copy(item.source, item.destination)
                 if not copyOK then error('Copy failed: ' .. tostring(copyErr)) end
                 copied = true

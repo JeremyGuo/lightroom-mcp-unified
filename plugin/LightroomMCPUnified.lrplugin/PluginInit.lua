@@ -16,6 +16,7 @@ PluginInfoProvider.resetForReload()
 
 local prefs = LrPrefs.prefsForPlugin()
 local autoStart = prefs.autoStartServer
+Log.info('PluginInit: autoStartServer=' .. tostring(autoStart))
 if autoStart == nil then
     autoStart = true
     prefs.autoStartServer = true

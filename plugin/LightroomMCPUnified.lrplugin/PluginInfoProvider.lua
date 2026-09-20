@@ -76,11 +76,8 @@ end
 
 local pluginState = _G.LightroomMCPUnified_State
 
--- Nothing in the plugin raises this any more: the LrShutdownApp and
--- LrShutdownPlugin hooks were removed because they cost a second or more on
--- every quit and bought no teardown that Lightroom's own context cancellation
--- did not already do. The guards stay because shutdown() below is still the
--- programmatic stop, and re-registering a hook is a one-line change.
+-- Reload and disable hooks signal the outgoing environment. Lightroom does
+-- not automatically stop long-lived tasks when it creates a fresh Lua state.
 local function shutdownRequested()
     return pluginState.shuttingDown == true
 end
@@ -756,12 +753,12 @@ function PluginInfoProvider.sectionsForTopOfDialog(f, propertyTable)
             },
             f:checkbox {
                 title = "Auto-start server on Lightroom launch",
-                value = LrView.bind('autoStartServer'),
+                value = LrView.bind { key='autoStartServer', bind_to_object=propertyTable },
             },
             f:row {
                 f:static_text { title = "Request port:", width = 110 },
                 f:edit_field {
-                    value = LrView.bind('requestPort'),
+                    value = LrView.bind { key='requestPort', bind_to_object=propertyTable },
                     width_in_chars = 7,
                     precision = 0,
                     min = 1,
@@ -772,7 +769,7 @@ function PluginInfoProvider.sectionsForTopOfDialog(f, propertyTable)
             f:row {
                 f:static_text { title = "Response port:", width = 110 },
                 f:edit_field {
-                    value = LrView.bind('responsePort'),
+                    value = LrView.bind { key='responsePort', bind_to_object=propertyTable },
                     width_in_chars = 7,
                     precision = 0,
                     min = 1,
