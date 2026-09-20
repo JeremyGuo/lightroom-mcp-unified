@@ -53,7 +53,9 @@ export const DEVELOP_TOOL_CONTRACTS: ToolContract[] = [
     bokeh: { type: "string", enum: ["Circle", "SoapBubble", "Blade", "Ring", "Anamorphic"] },
     catEye: number(0, 100), highlightsBoost: number(0, 100), focalRangeFromSubject: boolean,
   }),
-  tool("lr_enhance", "enhance", "Request AI Enhance using Lightroom's runtime API when available. This differs from ordinary noise-reduction sliders. Returns submission status, not a claim that a DNG was created or background processing finished.", {
+  tool("lr_enhance", "enhance", "Apply AI Enhance and, by default, wait for requested values and background completion using Lightroom's runtime state. Returns completed only after verification; timeout may leave Lightroom processing. Set wait=false for submission only. Does not claim a new DNG was created.", {
     denoise: boolean, denoiseAmount: number(1, 100), superRes: boolean, rawDetails: boolean,
+    wait: { type: "boolean", default: true },
+    timeout_seconds: { type: "integer", minimum: 1, maximum: 240, default: 120 },
   }),
 ];

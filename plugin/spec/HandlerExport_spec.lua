@@ -7,17 +7,22 @@ local function setup(opts)
     helper.installImport({
         LrApplication = { activeCatalog = function() return catalog end },
         LrLogger = helper.defaultLrLogger(),
-        LrFileUtils = {},
+        LrFileUtils = { createAllDirectories = function(destination)
+            if opts.directoryError then return false, 'permission denied' end
+            opts.createdDirectory = destination
+            return true
+        end },
         LrPathUtils = {},
         LrExportSession = function(args)
             table.insert(exportSessionCalls, args)
             return {
+                countRenditions=function() return opts.skipExisting and 0 or #args.photosToExport end,
                 renditions = function()
                     local i=0
                     return function()
                         i=i+1
-                        if i>#args.photosToExport then return nil end
-                        return i, { waitForRender=function()
+                        if opts.skipExisting or i>#args.photosToExport then return nil end
+                        return i, { wasSkipped=opts.skipRendition, waitForRender=function()
                             if opts.renderFailure then return false, 'render failed' end
                             return true, '/out/' .. tostring(i) .. '.jpg'
                         end }
@@ -31,6 +36,23 @@ local function setup(opts)
 end
 
 describe("HandlerExport.exportPhotos", function()
+    it('counts deliberate skips without claiming files were exported', function()
+        local _,h=setup({photos={helper.fakePhoto({id='1'})},skipExisting=true})
+        local r=h.exportPhotos({photo_ids={'1'},destination='/out',on_existing='skip'})
+        assert.is_true(r.success);assert.are.equal(0,r.exported);assert.are.equal(1,r.skipped)
+        _,h=setup({photos={helper.fakePhoto({id='1'})},skipRendition=true})
+        r=h.exportPhotos({photo_ids={'1'},destination='/out',on_existing='skip'})
+        assert.is_true(r.success);assert.are.equal(0,r.exported);assert.are.equal(1,r.skipped)
+    end)
+    it('creates the export destination and surfaces directory failures before rendering', function()
+        local opts = { photos={helper.fakePhoto({id='1',path='/a.jpg'})} }
+        local _, h, calls = setup(opts)
+        assert.is_true(h.exportPhotos({photo_ids={'1'},destination='/new/out'}).success)
+        assert.are.equal('/new/out',opts.createdDirectory)
+        opts.directoryError = true
+        assert.has_error(function() h.exportPhotos({photo_ids={'1'},destination='/blocked'}) end)
+        assert.are.equal(1,#calls)
+    end)
     it("exports found photos with default JPEG settings", function()
         local p = helper.fakePhoto({ id = "1", path = "/a.jpg" })
         local _, Handler, calls = setup({ photos = { p } })
@@ -127,10 +149,11 @@ describe("HandlerExport.exportPhotos", function()
         helper.installImport({
             LrApplication = { activeCatalog = function() return catalog end },
             LrLogger = helper.defaultLrLogger(),
-            LrFileUtils = {},
+            LrFileUtils = { createAllDirectories=function() return true end },
             LrPathUtils = {},
             LrExportSession = function()
                 return {
+                    countRenditions=function() return 1 end,
                     renditions = function()
                         local done=false
                         return function()

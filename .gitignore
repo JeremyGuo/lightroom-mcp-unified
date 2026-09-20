@@ -36,6 +36,7 @@ build/
 .claude/
 
 # Testing
+artifacts/
 coverage/
 .nyc_output/
 

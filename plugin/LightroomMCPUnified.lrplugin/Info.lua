@@ -11,10 +11,16 @@ return {
 
     LrPluginInfoProvider = 'PluginInfoProvider.lua',
     LrInitPlugin = 'PluginInit.lua',
-    -- LrForceInitPlugin forces eager load on Lr launch, but ONLY if the
-    -- plugin also exposes at least one menu item — see LrLibraryMenuItems
-    -- below. Adobe's own remote_control_socket sample uses this pattern.
+    LrShutdownPlugin = 'PluginShutdown.lua',
+    LrDisablePlugin = 'PluginShutdown.lua',
+    LrEnablePlugin = 'PluginInit.lua',
+    -- 15.5.1 launched in Develop does not eagerly load a Library-only menu
+    -- plugin. Keep a File menu entry as well (verified with an A/B restart).
     LrForceInitPlugin = true,
+
+    LrExportMenuItems = {
+        { title = "Lightroom MCP Unified — Show Status", file = "MenuShowStatus.lua" },
+    },
 
     LrLibraryMenuItems = {
         {

@@ -39,4 +39,4 @@ npm audit --prefix server --omit=dev
 | 预设 | 列出、读取、比较、创建、导出、应用、复制；检查同名消歧和不覆盖文件策略 |
 | 生命周期 | Lightroom 重启、插件重载、长时间空闲、客户端退出再启动；不残留占用端口的桥接 |
 
-尚未在本开发环境完成以上 Lightroom 实机清单。建议在满足这些条件后再将版本转为稳定发布。
+2026-09-20 已在 macOS / Lightroom Classic 15.5.1 上完成 JPEG、Nikon NEF、Ricoh DNG 实机测试。历史发现见 [首轮报告](LIVE_TEST_2026-09-20.md)，最新修复、回归与未覆盖范围见 [后续验收报告](LIVE_TEST_FOLLOWUP_2026-09-20.md)。剩余条件满足后再将版本转为稳定发布。

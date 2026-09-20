@@ -1,5 +1,6 @@
 local LrApplication = import 'LrApplication'
 local LrExportSession = import 'LrExportSession'
+local LrFileUtils = import 'LrFileUtils'
 
 local PhotoLookup = require 'PhotoLookup'
 local Log = require 'Log'
@@ -104,6 +105,10 @@ function ExportHandler.exportPhotos(args)
         exportSettings.LR_tiff_compressionMethod = 'compressionMethod_LZW'
     end
 
+    -- Lightroom requires the target directory to exist before session creation.
+    local created, createError = LrFileUtils.createAllDirectories(args.destination)
+    if not created then error('Cannot create export destination: ' .. tostring(createError)) end
+
     -- Create export session
     local exportSession = LrExportSession {
         photosToExport = photosToExport,
@@ -112,16 +117,21 @@ function ExportHandler.exportPhotos(args)
 
     -- Execute export (outside the read-access block above)
     local exportedCount, paths = 0, {}
+    -- Existing-file skip may remove renditions before iteration starts.
+    local plannedRenditions=exportSession:countRenditions()
+    local skippedCount=collisionHandling=='skip' and math.max(0,#photosToExport-plannedRenditions) or 0
     for _, rendition in exportSession:renditions({ stopIfCanceled=true }) do
         local ok, pathOrError = rendition:waitForRender()
-        if ok then
+        if rendition.wasSkipped then
+            skippedCount=skippedCount+1
+        elseif ok then
             exportedCount = exportedCount + 1
             table.insert(paths, pathOrError)
         else
             table.insert(failures, { error=tostring(pathOrError) })
         end
     end
-    if exportedCount + #failures < #args.photo_ids then
+    if exportedCount + skippedCount + #failures < #args.photo_ids then
         table.insert(failures, { error='Some renditions were skipped or cancelled' })
     end
 
@@ -130,6 +140,7 @@ function ExportHandler.exportPhotos(args)
     return {
         success = #failures == 0,
         exported = exportedCount,
+        skipped = skippedCount,
         destination = args.destination,
         paths = paths,
         failures = failures,

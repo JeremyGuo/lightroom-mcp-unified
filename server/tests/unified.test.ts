@@ -25,6 +25,10 @@ describe('unified develop surface', () => {
     ['lr_add_mask', { maskType: 'gradient', params: { angle: 45 } }],
     ['lr_enhance', { denoiseAmount: 0 }],
     ['lr_enhance', { denoiseAmount: 101 }],
+    ['lr_enhance', { wait: 'true' }],
+    ['lr_enhance', { timeout_seconds: 0 }],
+    ['lr_enhance', { timeout_seconds: 241 }],
+    ['lr_enhance', { timeout_seconds: 1.5 }],
     ['lr_lens_blur', { amount: 101 }],
     ['lr_update_mask', { adjustments: { Exposure: true } }],
   ])('rejects unsafe or unsupported arguments for %s', (name, args) => {

@@ -141,7 +141,7 @@ const responsePromise = new Promise((resolve, reject) => {
 await responseConnected;
 
 const payload = JSON.stringify({ hello: token, id, action, params });
-console.log(`>>> ${payload}`);
+console.log(">>>", JSON.stringify({ ...JSON.parse(payload), hello: "[redacted]" }));
 reqSock.write(payload + "\n");
 
 const resp = await responsePromise;
